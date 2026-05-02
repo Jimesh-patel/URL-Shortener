@@ -1,17 +1,16 @@
+import { getAndIncrement } from '../services/zk.service';
+
 let current = 0;
 let max = 0;
 
 const RANGE_SIZE = 1000;
 
-const fetchNewRange = async () => {
-  current = max;
-  max = max + RANGE_SIZE;
-};
-
-export const getNextToken = async (): Promise<number> => {
+export const getNextId = async (): Promise<number> => {
   if (current >= max) {
-    await fetchNewRange();
+    const start = await getAndIncrement(); 
+    current = start * RANGE_SIZE;
+    max = current + RANGE_SIZE;
   }
 
   return current++;
-};
+};  
