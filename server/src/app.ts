@@ -10,7 +10,10 @@ app.use(cors());
 app.use(express.json());
 
 app.use(limiter);
-app.use(errorHandler);
 app.use("/api/url", urlRoutes);
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+app.use(errorHandler);
 
 export default app;
