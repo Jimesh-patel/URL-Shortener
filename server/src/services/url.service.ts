@@ -11,12 +11,16 @@ const generateShortId = (): string => {
   return id;
 };
 
+const CACHE_TTL = 60 * 60;
+
 export const createShortUrlService = async (originalUrl: string) => {
   const hash = generateShortId();
 
   const url = await Url.create({ hash, originalUrl });
 
-  await redisClient.set(hash, originalUrl);
+  await redisClient.set(hash, originalUrl, {
+    EX: CACHE_TTL
+  });
 
   return url;
 };
@@ -24,15 +28,25 @@ export const createShortUrlService = async (originalUrl: string) => {
 export const getLongUrlService = async (hash: string) => {
   
   const cached = await redisClient.get(hash);
+
   if (cached) {
+    // cache hit → still increment visits in DB (async, non-blocking)
+    Url.updateOne({ hash }, { $inc: { visits: 1 } }).exec();
     return { hash, originalUrl: cached };
   }
 
-  const url = await Url.findOne({ hash });
+  // DB fallback + atomic increment
+  const url = await Url.findOneAndUpdate(
+    { hash },
+    { $inc: { visits: 1 } },
+    { new: true }
+  );
 
   if (!url) return null;
 
-  await redisClient.set(hash, url.originalUrl);
+  await redisClient.set(hash, url.originalUrl, {
+    EX: CACHE_TTL
+  });
 
   return url;
 };
