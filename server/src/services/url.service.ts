@@ -1,20 +1,23 @@
 import { Url } from "../models/url.model";
 import { redisClient } from "../config/redis";
+import { getNextToken } from "./id.service";
 
-const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const base62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-const generateShortId = (): string => {
-  let id = "";
-  for (let i = 0; i < 6; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
+const encode = (num: number): string => {
+  let str = "";
+  while (num > 0) {
+    str = base62[num % 62] + str;
+    num = Math.floor(num / 62);
   }
-  return id;
+  return str;
 };
 
 const CACHE_TTL = 60 * 60;
 
 export const createShortUrlService = async (originalUrl: string) => {
-  const hash = generateShortId();
+  const token = await getNextToken();
+  const hash = encode(token);
 
   const url = await Url.create({ hash, originalUrl });
 
@@ -30,7 +33,8 @@ export const getLongUrlService = async (hash: string) => {
   const cached = await redisClient.get(hash);
 
   if (cached) {
-    // cache hit → still increment visits in DB (async, non-blocking)
+    // cache hit 
+    // still increment visits in DB (async, non-blocking)
     Url.updateOne({ hash }, { $inc: { visits: 1 } }).exec();
     return { hash, originalUrl: cached };
   }
