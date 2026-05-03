@@ -60,14 +60,15 @@ export const createShortUrlService = async (originalUrl: string) => {
     throw error;
   }
 };
+
+
 export const getLongUrlService = async (hash: string) => {
   try{
     
     const cached = await redisClient.get(hash);
 
     if (cached) {
-      // cache hit 
-      // still increment visits in DB (async, non-blocking)
+      // Async visit increment (non-blocking)
       Url.updateOne({ hash }, { $inc: { visits: 1 } }).exec();
       return { hash, originalUrl: cached };
     }
