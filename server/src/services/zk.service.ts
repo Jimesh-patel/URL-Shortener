@@ -14,7 +14,7 @@ export const initCounter = async () => {
         Buffer.from("0"),
         (err) => {
           if (err) return reject(err);
-          console.log("✅ Zookeeper counter initialized");
+          console.log("Zookeeper counter initialized");
           resolve();
         }
       );

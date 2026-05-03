@@ -14,11 +14,11 @@ export const createShortUrl = async (
       return res.status(400).json({ message: "originalUrl is required" });
     }
 
-    const url = await createShortUrlService(originalUrl);
+    const hash = await createShortUrlService(originalUrl);
 
     return res.status(201).json({
-      hash: url.hash,
-      originalUrl: url.originalUrl
+      hash: hash,
+      originalUrl: originalUrl
     });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });

@@ -18,7 +18,9 @@ const urlSchema = new Schema<IUrl>(
     },
     originalUrl: {
       type: String,
-      required: true
+      required: true,
+      unique: true, 
+      index: true
     },
     visits: {
       type: Number,

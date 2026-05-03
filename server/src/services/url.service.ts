@@ -16,41 +16,56 @@ const encode = (num: number): string => {
 const CACHE_TTL = 60 * 60;
 
 export const createShortUrlService = async (originalUrl: string) => {
-  const token = await getNextToken();
-  const hash = encode(token);
 
-  const url = await Url.create({ hash, originalUrl });
+  const existing = await Url.findOne({ originalUrl });
+  if (existing) return existing.hash;
 
-  await redisClient.set(hash, originalUrl, {
-    EX: CACHE_TTL
-  });
+  try{
 
-  return url;
+    const token = await getNextToken();
+    const hash = encode(token);
+
+    const url = await Url.create({ hash, originalUrl });
+
+    await redisClient.set(hash, originalUrl, {
+      EX: CACHE_TTL
+    });
+
+    return url.hash;
+  } catch (error: any) {
+    console.error("Error creating short URL:", error);
+    throw error;
+  }
 };
 
 export const getLongUrlService = async (hash: string) => {
-  
-  const cached = await redisClient.get(hash);
+  try{
+    
+    const cached = await redisClient.get(hash);
 
-  if (cached) {
-    // cache hit 
-    // still increment visits in DB (async, non-blocking)
-    Url.updateOne({ hash }, { $inc: { visits: 1 } }).exec();
-    return { hash, originalUrl: cached };
+    if (cached) {
+      // cache hit 
+      // still increment visits in DB (async, non-blocking)
+      Url.updateOne({ hash }, { $inc: { visits: 1 } }).exec();
+      return { hash, originalUrl: cached };
+    }
+
+    // DB fallback + atomic increment
+    const url = await Url.findOneAndUpdate(
+      { hash },
+      { $inc: { visits: 1 } },
+      { new: true }
+    );
+
+    if (!url) return null;
+
+    await redisClient.set(hash, url.originalUrl, {
+      EX: CACHE_TTL
+    });
+
+    return url;
+  } catch (error: any) {
+    console.error("Error retrieving long URL:", error);
+    throw error;
   }
-
-  // DB fallback + atomic increment
-  const url = await Url.findOneAndUpdate(
-    { hash },
-    { $inc: { visits: 1 } },
-    { new: true }
-  );
-
-  if (!url) return null;
-
-  await redisClient.set(hash, url.originalUrl, {
-    EX: CACHE_TTL
-  });
-
-  return url;
 };
