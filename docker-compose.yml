@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  server:
+    build: ./server
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+      - zookeeper
+    env_file:
+      - ./server/.env
+    environment:
+      # Override local values for Docker network
+      REDIS_URL: redis://redis:6379
+      ZK_URL: zookeeper:2181
+    restart: unless-stopped
+
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+
+  zookeeper:
+    image: zookeeper:3.9
+    ports:
+      - "2181:2181"
+    restart: unless-stopped
