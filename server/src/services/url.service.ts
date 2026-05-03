@@ -17,27 +17,49 @@ const CACHE_TTL = 60 * 60;
 
 export const createShortUrlService = async (originalUrl: string) => {
 
+  const cachedHash = await redisClient.get(`url:${originalUrl}`);
+  if (cachedHash) return cachedHash;
+
   const existing = await Url.findOne({ originalUrl });
-  if (existing) return existing.hash;
+  if (existing) {
+    // 🔥 cache it
+    await redisClient.set(`url:${originalUrl}`, existing.hash, {
+      EX: CACHE_TTL
+    });
 
-  try{
+    return existing.hash;
+  }
 
+  try {
     const token = await getNextToken();
     const hash = encode(token);
 
     const url = await Url.create({ hash, originalUrl });
 
-    await redisClient.set(hash, originalUrl, {
-      EX: CACHE_TTL
-    });
+    await Promise.all([
+      redisClient.set(`url:${originalUrl}`, hash, { EX: CACHE_TTL }),
+      redisClient.set(`hash:${hash}`, originalUrl, { EX: CACHE_TTL })
+    ]);
 
-    return url.hash;
+    return hash;
+
   } catch (error: any) {
+    if (error.code === 11000) {
+      const existing = await Url.findOne({ originalUrl });
+
+      if (existing) {
+        await redisClient.set(`url:${originalUrl}`, existing.hash, {
+          EX: CACHE_TTL
+        });
+
+        return existing.hash;
+      }
+    }
+
     console.error("Error creating short URL:", error);
     throw error;
   }
 };
-
 export const getLongUrlService = async (hash: string) => {
   try{
     
