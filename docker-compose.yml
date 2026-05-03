@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-  # Backend instances (3 replicas for load balancing)
   server1:
     build: ./server
     env_file:
@@ -38,7 +37,6 @@ services:
       - zookeeper
     restart: unless-stopped
 
-  # Nginx Load Balancer
   nginx:
     image: nginx:alpine
     ports:
@@ -51,12 +49,20 @@ services:
       - server3
     restart: unless-stopped
 
-  # Redis
+  client:
+    build: ./client
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost/api/url
+    depends_on:
+      - nginx
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
 
-  # Zookeeper
   zookeeper:
     image: zookeeper:3.9
     restart: unless-stopped

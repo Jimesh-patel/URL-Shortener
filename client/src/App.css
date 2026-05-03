@@ -92,6 +92,8 @@ h1 {
 
 .analytics p {
   margin: 6px 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .analytics span {
@@ -117,6 +119,7 @@ h1 {
   border-radius: 8px;
   margin-bottom: 12px;
   word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .highlight a {
