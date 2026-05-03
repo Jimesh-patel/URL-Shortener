@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createShortUrlService, getLongUrlService } from "../services/url.service";
+import { createShortUrlService, getLongUrlService, getUrlAnalyticsService } from "../services/url.service";
 import { CreateUrlDto, RedirectParamsDto } from "../dtos/url.dto";
 
 // POST /api/url
@@ -44,6 +44,29 @@ export const redirectUrl = async (
     }
 
     return res.redirect(url.originalUrl);
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getUrlAnalytics = async (
+  req: Request<RedirectParamsDto>,
+  res: Response
+) => {
+  try {
+    const { hash } = req.params;
+
+    if (!hash) {
+      return res.status(400).json({ message: "Invalid hash" });
+    }
+
+    const data = await getUrlAnalyticsService(hash);
+
+    if (!data) {
+      return res.status(404).json({ message: "URL not found" });
+    }
+
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
   }

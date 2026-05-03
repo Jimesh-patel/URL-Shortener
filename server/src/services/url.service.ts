@@ -92,3 +92,19 @@ export const getLongUrlService = async (hash: string) => {
     throw error;
   }
 };
+
+
+export const getUrlAnalyticsService = async (hash: string) => {
+  
+  const url = await Url.findOne({ hash }).lean();
+
+  if (!url) return null;
+
+  return {
+    hash: url.hash,
+    originalUrl: url.originalUrl,
+    visits: url.visits,
+    createdAt: url.createdAt,
+    expiresAt: url.expiresAt || null
+  };
+};
