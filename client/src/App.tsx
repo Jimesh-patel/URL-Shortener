@@ -1,26 +1,17 @@
+import Shortener from "./components/Shortener";
+import Analytics from "./components/Analytics";
+import "./App.css";
 
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import Home from "./pages/Home";
-import Analytics from "./pages/Analytics";
-import './App.css'
-
-function App() {
+export default function App() {
+  const baseUrl =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   return (
-    <>
-      <BrowserRouter>
-      <nav>
-        <Link to="/">Home</Link> |{" "}
-        <Link to="/analytics">Analytics</Link>
-      </nav>
+    <div className="app">
+      <h1>🔗 URL Shortener</h1>
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/analytics" element={<Analytics />} />
-      </Routes>
-    </BrowserRouter>
-    </>
-  )
+      <Shortener baseUrl={baseUrl} />
+      <Analytics />
+    </div>
+  );
 }
-
-export default App
