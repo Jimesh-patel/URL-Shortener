@@ -1,0 +1,30 @@
+# Node modules (reinstalled inside container)
+node_modules
+
+# Build output
+dist
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files (do NOT copy secrets)
+.env
+.env.*
+
+# Git
+.git
+.gitignore
+
+# Docker files (optional)
+Dockerfile
+docker-compose.yml
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Tests (optional)
+coverage
